@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Manage Categories</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      padding: 100px 40px;
+      background: #f8f8f8;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .admin-section {
+      max-width: 700px;
+      margin: auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .input-row input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    .input-row button {
+      background: #7d2ae8;
+      color: white;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+
+    .edit-btn, .delete-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+
+    .edit-btn {
+      background-color: #3498db;
+      color: #fff;
+      margin-right: 5px;
+    }
+
+    .delete-btn {
+      background-color: #e74c3c;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <section class="admin-section">
+    <h1>Manage Categories</h1>
+
+    <div class="input-row">
+      <input type="text" id="categoryName" placeholder="Enter category name" />
+      <button onclick="addCategory()">Add</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Category Name</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="categoryTableBody">
+        <!-- Dynamic rows will appear here -->
+      </tbody>
+    </table>
+  </section>
+
+  <script>
+    function addCategory() {
+      const input = document.getElementById("categoryName");
+      const name = input.value.trim();
+      if (!name) {
+        alert("Please enter a category name.");
+        return;
+      }
+
+      const tbody = document.getElementById("categoryTableBody");
+      const row = tbody.insertRow();
+
+      row.innerHTML = `
+        <td>${name}</td>
+        <td>
+          <button class="edit-btn" onclick="editCategory(this)">Edit</button>
+          <button class="delete-btn" onclick="deleteCategory(this)">Delete</button>
+        </td>
+      `;
+
+      input.value = '';
+      saveCategories();
+    }
+
+    function deleteCategory(btn) {
+      const row = btn.closest("tr");
+      row.remove();
+      saveCategories();
+    }
+
+    function editCategory(btn) {
+      const row = btn.closest("tr");
+      const td = row.cells[0];
+
+      if (btn.textContent === "Save") {
+        const newValue = td.querySelector("input").value.trim();
+        if (!newValue) {
+          alert("Category name cannot be empty.");
+          return;
+        }
+        td.textContent = newValue;
+        btn.textContent = "Edit";
+      } else {
+        const currentText = td.textContent;
+        td.innerHTML = `<input type="text" value="${currentText}" />`;
+        btn.textContent = "Save";
+      }
+
+      saveCategories();
+    }
+
+    function saveCategories() {
+      const rows = document.querySelectorAll("#categoryTableBody tr");
+      const categories = Array.from(rows).map(row => row.cells[0].textContent);
+      localStorage.setItem("adminCategories", JSON.stringify(categories));
+    }
+
+    function loadCategories() {
+      const data = JSON.parse(localStorage.getItem("adminCategories")) || [];
+      const tbody = document.getElementById("categoryTableBody");
+      data.forEach(name => {
+        const row = tbody.insertRow();
+        row.innerHTML = `
+          <td>${name}</td>
+          <td>
+            <button class="edit-btn" onclick="editCategory(this)">Edit</button>
+            <button class="delete-btn" onclick="deleteCategory(this)">Delete</button>
+          </td>
+        `;
+      });
+    }
+
+    window.onload = loadCategories;
+  </script>
+</body>
+</html>

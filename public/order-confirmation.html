@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Order Confirmation</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      padding: 100px 40px;
+      font-family: 'Poppins', sans-serif;
+      background: #f8f8f8;
+    }
+    .confirmation-container {
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+    h1 { text-align: center; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+    img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; }
+    .total {
+      font-size: 1.2em;
+      text-align: right;
+      font-weight: 600;
+      margin-bottom: 30px;
+    }
+    .confirm-btn {
+      background: #7d2ae8;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      display: block;
+      margin: auto;
+      cursor: pointer;
+    }
+    .confirm-btn:hover { background: #5c1ec7; }
+  </style>
+</head>
+<body>
+  <div class="confirmation-container">
+    <h1>Confirm Your Order</h1>
+
+    <table id="orderTable">
+      <thead>
+        <tr>
+          <th>Image</th><th>Product</th><th>Category</th><th>Price</th><th>Qty</th><th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="total" id="orderTotal">Total: $0.00</div>
+    <button class="confirm-btn" onclick="confirmOrder()">Confirm Order</button>
+  </div>
+
+  <script>
+    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+    function loadOrderTable() {
+      const tbody = document.querySelector("#orderTable tbody");
+      const totalDisplay = document.getElementById("orderTotal");
+
+      let total = 0;
+      tbody.innerHTML = '';
+
+      cart.forEach(item => {
+        const subtotal = item.qty * item.price;
+        total += subtotal;
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td><img src="${item.img}" alt="${item.product_name}" /></td>
+          <td>${item.product_name}</td>
+          <td>${item.category_name}</td>
+          <td>$${item.price.toFixed(2)}</td>
+          <td>${item.qty}</td>
+          <td>$${subtotal.toFixed(2)}</td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      totalDisplay.textContent = `Total: $${total.toFixed(2)}`;
+    }
+
+    async function confirmOrder() {
+      if (cart.length === 0) {
+        alert("Your cart is empty.");
+        return;
+      }
+
+      const orderData = {
+        items: cart.map(item => ({
+          image_url: item.img,
+          product_name: item.product_name,
+          category_name: item.category_name,
+          price: item.price,
+          quantity: item.qty
+        }))
+      };
+
+      try {
+        const res = await fetch('http://localhost:3000/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderData)
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          alert("Thank you! Your order has been confirmed.");
+          localStorage.removeItem("cart");
+          window.location.href = "products.html";
+        } else {
+          alert("Order failed: " + data.message);
+        }
+      } catch (err) {
+        alert("Server error placing order.");
+        console.error(err);
+      }
+    }
+
+    window.onload = loadOrderTable;
+  </script>
+</body>
+</html>

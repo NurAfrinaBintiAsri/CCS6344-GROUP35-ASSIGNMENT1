@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Login - ARA Beauty</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      display: flex;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+    }
+    .login-container {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+      width: 320px;
+    }
+    h2 {
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background-color: #7d2ae8;
+      border: none;
+      color: #fff;
+      font-size: 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #7d2ae8;
+    }
+    .message {
+      margin-top: 1rem;
+      text-align: center;
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h2>Admin Login</h2>
+    <form id="admin-login-form">
+      <input type="email" name="email" placeholder="Admin Email" required />
+      <input type="password" name="password" placeholder="Password" required />
+      <button type="submit">Login</button>
+    </form>
+    <div class="message" id="message"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('admin-login-form');
+    const messageDiv = document.getElementById('message');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      messageDiv.textContent = ''; // Clear previous messages
+
+      const email = form.email.value.trim();
+      const password = form.password.value;
+
+      try {
+        const res = await fetch('http://localhost:3000/admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          alert(data.message);
+          window.location.href = data.redirect;
+        } else {
+          messageDiv.textContent = data.message || 'Login failed';
+        }
+      } catch (error) {
+        messageDiv.textContent = 'Server error. Please try again later.';
+        console.error('Admin login error:', error);
+      }
+    });
+  </script>
+</body>
+</html>

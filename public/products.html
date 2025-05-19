@@ -1,0 +1,98 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Product Page</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css" />
+</head>
+<body>
+  <header class="header">
+    <nav class="nav">
+      <a href="index.html" class="nav_logo">ARA Beauty</a>
+      <ul class="nav_items">
+        <li class="nav_item">
+          <a href="home.html" class="nav_link">Home</a>
+          <a href="products.html" class="nav_link">Products</a>
+          <a href="order-confirmation.html" class="button">🛒 Cart (<span id="cart-count">0</span>)</a>
+        </li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="product-section">
+    <h2 class="section-title">Our Products</h2>
+    <div class="product-grid" id="productGrid"></div>
+  </main>
+
+  <script>
+    // Helpers
+    function getCart() {
+      return JSON.parse(localStorage.getItem('cart')) || [];
+    }
+    function saveCart(cart) {
+      localStorage.setItem('cart', JSON.stringify(cart));
+    }
+    function updateCartCount() {
+      const cart = getCart();
+      const count = cart.reduce((sum, item) => sum + item.qty, 0);
+      document.getElementById('cart-count').textContent = count;
+    }
+    function addToCart(product) {
+      const cart = getCart();
+      const existing = cart.find(item => item.product_id === product.product_id);
+      if (existing) {
+        existing.qty++;
+      } else {
+        cart.push({...product, qty: 1});
+      }
+      saveCart(cart);
+      updateCartCount();
+      alert(`${product.product_name} added to cart!`);
+    }
+
+    // Load products & bind buttons
+    async function loadProducts() {
+      try {
+        const res = await fetch('http://localhost:3000/products');
+        const data = await res.json();
+        if (!data.success) return console.error('Failed to load products');
+
+        window.productsData = data.products;
+        const grid = document.getElementById('productGrid');
+        grid.innerHTML = '';
+
+        data.products.forEach(product => {
+          const card = document.createElement('div');
+          card.className = 'product-card';
+          card.innerHTML = `
+            <img src="${product.image_url || 'default-product.jpg'}" alt="${product.product_name}" />
+            <h3 class="product-name">${product.product_name}</h3>
+            <p class="product-category">Category: ${product.category_name}</p>
+            <p class="product-price" data-price="${product.product_price}">$${product.product_price.toFixed(2)}</p>
+            <button class="add-to-cart">Add to Cart</button>
+          `;
+          grid.appendChild(card);
+
+          card.querySelector('.add-to-cart').addEventListener('click', () => {
+            addToCart({
+              product_id: product.product_id,
+              product_name: product.product_name,
+              category_name: product.category_name,
+              price: product.product_price,
+              img: product.image_url || 'default-product.jpg'
+            });
+          });
+        });
+
+        updateCartCount();
+      } catch (err) {
+        console.error('Error loading products:', err);
+      }
+    }
+
+    loadProducts();
+  </script>
+</body>
+</html>

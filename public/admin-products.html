@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin - Manage Products</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      padding: 100px 40px 40px;
+      font-family: 'Poppins', sans-serif;
+      background: #f2f2f2;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    .product-form, .product-table {
+      max-width: 800px;
+      margin: 0 auto 40px;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+    .product-form input {
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .product-form button {
+      padding: 10px 20px;
+      background: #7d2ae8;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    .delete-btn, .edit-btn {
+      color: white;
+      padding: 5px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .delete-btn { background: #e74c3c; }
+    .edit-btn { background: #3498db; margin-right: 5px; }
+    img.product-image {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Manage Products</h1>
+
+  <div class="product-form">
+    <h2>Add New Product</h2>
+    <input type="text" id="productName" placeholder="Product Name" required />
+    <input type="text" id="productCategory" placeholder="Category Name" required />
+    <input type="number" id="productPrice" placeholder="Price" required step="0.01" />
+    <input type="file" id="productImage" accept="image/*" />
+    <button onclick="addProduct()">Add Product</button>
+  </div>
+
+  <div class="product-table">
+    <h2>Product List</h2>
+    <table id="productsTable">
+      <thead>
+        <tr>
+          <th>Image</th>
+          <th>Name</th>
+          <th>Category</th>
+          <th>Price</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Products will be loaded here -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    async function loadProducts() {
+      try {
+        const res = await fetch('http://localhost:3000/products');
+        const data = await res.json();
+
+        if (!data.success) {
+          alert('Failed to load products');
+          return;
+        }
+
+        const tbody = document.querySelector('#productsTable tbody');
+        tbody.innerHTML = '';
+
+        data.products.forEach(product => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${product.image_url ? `<img src="${product.image_url}" alt="${product.product_name}" class="product-image" />` : 'No Image'}</td>
+            <td>${product.product_name}</td>
+            <td>${product.category_name}</td>
+            <td>$${parseFloat(product.product_price).toFixed(2)}</td>
+            <td>
+              <button class="edit-btn" disabled>Edit</button>
+              <button class="delete-btn" disabled>Delete</button>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Error loading products:', error);
+      }
+    }
+
+    async function addProduct() {
+      const name = document.getElementById('productName').value.trim();
+      const category = document.getElementById('productCategory').value.trim();
+      const price = document.getElementById('productPrice').value.trim();
+      const imageInput = document.getElementById('productImage');
+
+      if (!name || !category || !price || isNaN(price)) {
+        alert("Please enter valid product details.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('product_name', name);
+      formData.append('category_name', category);
+      formData.append('product_price', price);
+
+      if (imageInput.files[0]) {
+        formData.append('image', imageInput.files[0]);
+      }
+
+      try {
+        const res = await fetch('http://localhost:3000/products', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          alert(data.message);
+          // Reload products list after adding
+          loadProducts();
+          // Clear form
+          document.getElementById('productName').value = '';
+          document.getElementById('productCategory').value = '';
+          document.getElementById('productPrice').value = '';
+          imageInput.value = '';
+        } else {
+          alert(data.message || 'Failed to add product');
+        }
+      } catch (error) {
+        alert('Server error while adding product');
+        console.error(error);
+      }
+    }
+
+    window.onload = loadProducts;
+  </script>
+</body>
+</html>
